@@ -3,10 +3,12 @@ import json
 import logging
 import logging.config
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import joblib
+import keras
 import mlflow
 import numpy as np
 import pandas as pd
@@ -209,7 +211,6 @@ class Model(mlflow.pyfunc.PythonModel):
         if not os.getenv("KERAS_BACKEND"):
             os.environ["KERAS_BACKEND"] = "tensorflow"
 
-        import keras
 
         logging.info("Keras backend: %s", os.environ.get("KERAS_BACKEND"))
 
@@ -226,8 +227,6 @@ class Model(mlflow.pyfunc.PythonModel):
 
     def _configure_logging(self):
         """Configure how the logging system will behave."""
-        import sys
-
         if Path("logging.conf").exists():
             logging.config.fileConfig("logging.conf")
         else:
