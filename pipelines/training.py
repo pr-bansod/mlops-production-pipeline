@@ -1,6 +1,10 @@
 import os
+import tempfile
 from pathlib import Path
 
+import joblib
+import mlflow
+import numpy as np
 from common import (
     DatasetMixin,
     Pipeline,
@@ -18,6 +22,7 @@ from metaflow import (
     project,
     step,
 )
+from sklearn.model_selection import KFold
 
 
 @project(name="penguins")
@@ -56,8 +61,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
     @step
     def start(self):
         """Start and prepare the Training pipeline."""
-        import mlflow
-
         logger = self.logger()
 
         mlflow.set_tracking_uri(self.mlflow_tracking_uri)
@@ -87,8 +90,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
     @step
     def cross_validation(self):
         """Generate the indices to split the data for the cross-validation process."""
-        from sklearn.model_selection import KFold
-
         # We are going to use a 5-fold cross-validation process. We'll shuffle the data
         # before splitting it into batches.
         kfold = KFold(n_splits=5, shuffle=True)
@@ -147,8 +148,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
         This step will run for each fold in the cross-validation process. It trains the
         model using the data we processed in the previous step.
         """
-        import mlflow
-
         logger = self.logger()
         logger.info("Training fold %d...", self.fold)
         mlflow.set_tracking_uri(self.mlflow_tracking_uri)
@@ -205,8 +204,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
         This step will run for each fold in the cross-validation process. It evaluates
         the model using the test data associated with the current fold.
         """
-        import mlflow
-
         logger = self.logger()
         logger.info("Evaluating fold %d...", self.fold)
         mlflow.set_tracking_uri(self.mlflow_tracking_uri)
@@ -243,9 +240,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
     @step
     def average_scores(self, inputs):
         """Averages the scores computed for each individual model."""
-        import mlflow
-        import numpy as np
-
         logger = self.logger()
         mlflow.set_tracking_uri(self.mlflow_tracking_uri)
 
@@ -310,8 +304,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
     @step
     def train(self):
         """Train the final model using the entire dataset."""
-        import mlflow
-
         self.logger().info("Training final model...")
 
         mlflow.set_tracking_uri(self.mlflow_tracking_uri)
@@ -346,10 +338,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
         This function will prepare and register the final model in the model registry
         if its accuracy is above a predefined threshold.
         """
-        import tempfile
-
-        import mlflow
-
         logger = self.logger()
         mlflow.set_tracking_uri(self.mlflow_tracking_uri)
 
@@ -414,8 +402,6 @@ class Training(FlowSpec, Pipeline, DatasetMixin):
         The model must preprocess the raw input data before making a prediction, so we
         need to include the Scikit-Learn transformers as part of the model package.
         """
-        import joblib
-
         # Let's start by saving the model inside the supplied directory.
         model_path = (Path(directory) / "model.keras").as_posix()
         self.model.save(model_path)
