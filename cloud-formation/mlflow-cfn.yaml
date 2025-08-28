@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Machine Learning School - Remote MLflow server.'
+Description: 'Remote MLflow server.'
 
 Resources:
   EC2KeyPair:
